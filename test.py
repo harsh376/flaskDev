@@ -1,8 +1,17 @@
 
 # imported the Flask class
-from flask import Flask, url_for, request, jsonify, make_response
+from flask import Flask, url_for, request, jsonify, make_response, json
 # create an instance of this class. first argument is the name of the application's module or package
 app = Flask(__name__)
+
+from pusher import Pusher
+p = Pusher(
+	app_id='131763',
+	key='f7159e9e2eea1dda351b',
+	secret='ff5fc82451faa0f65a33',
+	ssl=True,
+	port=443
+)
 
 
 
@@ -11,10 +20,24 @@ app = Flask(__name__)
 def index():
 	if request.method == 'POST':
 		payload = request.get_json()
-		message = 'from server: '+ payload[u'message']
+		message = payload[u'message']
+		
+		p.trigger(u'private-test-channel', u'voila', {u'some': message})
+		
 		return jsonify({'message': message})
 	else:
 		return 'hello'
+
+
+@app.route("/auth", methods=['POST'])
+def pusher_authentication():
+
+  auth = p.authenticate(
+    channel=request.form['channel_name'],
+    socket_id=request.form['socket_id']
+  )
+  return json.dumps(auth)
+
 
 @app.route('/hello')
 def hello():
